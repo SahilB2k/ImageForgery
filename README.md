@@ -21,10 +21,8 @@ This project aims to detect forged images using a deep learning-based **Discrimi
 │   ├── train.py                   # Model training script
 ├── app/
 │   ├── app.py                      # Flask-based API
-│   ├── static/                      # UI-related assets
-├── utils/
-│   ├── preprocess.py                # Image preprocessing functions
-│   ├── inference.py                  # Model inference and forgery detection logic
+│   ├── static/
+|                                     
 ├── datasets/
 │   ├── real_images/                  # Folder containing real images
 │   ├── forged_images/                # Folder containing forged images
