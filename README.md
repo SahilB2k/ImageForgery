@@ -82,3 +82,10 @@ Contributions are welcome! If you'd like to improve the model or add new feature
 ---
 
 This README provides a **clear overview**, **installation guide**, **usage instructions**, and **contribution details**. 
+
+
+<div align="center">
+  <img src="./images/home.png" alt="Deleting Endpoints" width="700" >
+  
+  <p><em>Home screen</em></p>
+</div>
