@@ -407,6 +407,15 @@
             font-size: 0.9rem;
             display: none;
         }
+        .prediction-disclaimer {
+            margin-top: 15px;
+            font-size: 0.85rem;
+            color: #666;
+            font-style: italic;
+            padding: 10px;
+            border-radius: 8px;
+            background-color: rgba(0, 0, 0, 0.05);
+        }
     </style>
 </head>
 <body>
@@ -441,6 +450,7 @@
                         <div class="confidence-bar" id="confidence-bar"></div>
                     </div>
                     <p id="confidence-text"></p>
+                    <p class="prediction-disclaimer">Note: This prediction is based on our current model and may not be 100% accurate. Please use this result as a guide rather than a definitive answer.</p>
                     
                     <!-- New button for forgery detection -->
                     <button class="detect-forgery-btn" id="detect-forgery-btn" aria-label="Detect forgery regions">
