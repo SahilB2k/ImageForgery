@@ -1,0 +1,443 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sign Up - ImageAI</title>
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #6366f1;
+            --primary-dark: #4f46e5;
+            --secondary: #8b5cf6;
+            --accent: #c084fc;
+            --dark: #1e293b;
+            --light: #f8fafc;
+            --gray: #64748b;
+            --error: #ef4444;
+            --success: #22c55e;
+            --transition: all 0.3s ease;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+        }
+
+        body {
+            background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem;
+        }
+
+        .auth-container {
+            width: 100%;
+            max-width: 440px;
+            background: white;
+            border-radius: 24px;
+            box-shadow: 0 10px 25px -3px rgba(0, 0, 0, 0.1);
+            padding: 3rem 2.5rem;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .auth-container::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+        }
+
+        .auth-header {
+            text-align: center;
+            margin-bottom: 2.5rem;
+        }
+
+        .auth-header h2 {
+            font-weight: 800;
+            font-size: 2.25rem;
+            color: var(--dark);
+            margin-bottom: 0.75rem;
+            letter-spacing: -0.025em;
+        }
+
+        .auth-header p {
+            color: var(--gray);
+            font-size: 1.1rem;
+        }
+
+        .auth-buttons {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .auth-btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 1rem 1.5rem;
+            border-radius: 12px;
+            border: 1.5px solid #e2e8f0;
+            background: white;
+            color: var(--dark);
+            font-weight: 600;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: var(--transition);
+            gap: 0.75rem;
+        }
+
+        .auth-btn:hover {
+            background: var(--light);
+            border-color: var(--primary);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(99, 102, 241, 0.1);
+        }
+
+        .auth-btn img {
+            width: 24px;
+            height: 24px;
+        }
+
+        .auth-divider {
+            display: flex;
+            align-items: center;
+            text-align: center;
+            margin: 2rem 0;
+        }
+
+        .auth-divider::before,
+        .auth-divider::after {
+            content: '';
+            flex: 1;
+            border-bottom: 2px solid #e2e8f0;
+        }
+
+        .auth-divider span {
+            padding: 0 1rem;
+            color: var(--gray);
+            font-weight: 500;
+            font-size: 0.95rem;
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            color: var(--dark);
+            font-weight: 600;
+            font-size: 0.95rem;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 1rem;
+            border: 2px solid #e2e8f0;
+            border-radius: 12px;
+            font-size: 1rem;
+            transition: var(--transition);
+        }
+
+        .form-group input:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.1);
+        }
+
+        .form-group.error input {
+            border-color: var(--error);
+        }
+
+        .error-message {
+            color: var(--error);
+            font-size: 0.875rem;
+            margin-top: 0.5rem;
+            display: none;
+        }
+
+        .form-group.error .error-message {
+            display: block;
+        }
+
+        .submit-btn {
+            width: 100%;
+            padding: 1rem;
+            border: none;
+            border-radius: 12px;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+            color: white;
+            font-weight: 600;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .submit-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 16px rgba(99, 102, 241, 0.2);
+        }
+
+        .submit-btn:disabled {
+            opacity: 0.7;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .auth-footer {
+            text-align: center;
+            margin-top: 2rem;
+            color: var(--gray);
+            font-size: 0.95rem;
+        }
+
+        .auth-footer a {
+            color: var(--primary);
+            text-decoration: none;
+            font-weight: 600;
+        }
+
+        .auth-footer a:hover {
+            text-decoration: underline;
+        }
+
+        @media (max-width: 480px) {
+            .auth-container {
+                padding: 2rem 1.5rem;
+            }
+
+            .auth-header h2 {
+                font-size: 1.875rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="auth-container">
+        <div class="auth-header">
+            <h2>Create Account</h2>
+            <p>Sign up to get started with ImageAI</p>
+        </div>
+
+        <div class="auth-buttons">
+            <button class="auth-btn" id="googleSignIn">
+                <img src="https://www.google.com/favicon.ico" alt="Google">
+                Sign up with Google
+            </button>
+        </div>
+
+        <div class="auth-divider">
+            <span>or sign up with email</span>
+        </div>
+
+        <form id="signupForm">
+            <div class="form-group">
+                <label for="name">Full Name</label>
+                <input type="text" id="name" required placeholder="Enter your full name">
+            </div>
+            <div class="form-group">
+                <label for="email">Email</label>
+                <input type="email" id="email" required placeholder="Enter your email">
+            </div>
+            <div class="form-group">
+                <label for="password">Password</label>
+                <input type="password" id="password" required placeholder="Create a password">
+            </div>
+            <div class="form-group">
+                <label for="confirmPassword">Confirm Password</label>
+                <input type="password" id="confirmPassword" required placeholder="Confirm your password">
+            </div>
+            <button type="submit" class="submit-btn">Create Account</button>
+        </form>
+
+        <div class="auth-footer">
+            <p>Already have an account? <a href="{{ url_for('login') }}">Log in</a></p>
+        </div>
+    </div>
+
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
+
+    <!-- Firebase Configuration -->
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyBX3FViKDITFrEapNYJSr9rZ0mPWefOxhU",
+            authDomain: "imageforgery-ff2f3.firebaseapp.com",
+            projectId: "imageforgery-ff2f3",
+            storageBucket: "imageforgery-ff2f3.firebasestorage.app",
+            messagingSenderId: "412293593917",
+            appId: "1:412293593917:web:5105787312da9dbb82a354",
+            measurementId: "G-8E9RW3772R"
+        };
+
+        // Initialize Firebase
+        try {
+            firebase.initializeApp(firebaseConfig);
+            console.log("Firebase initialized successfully");
+        } catch (error) {
+            console.error("Firebase initialization error:", error);
+        }
+
+        const auth = firebase.auth();
+        const googleProvider = new firebase.auth.GoogleAuthProvider();
+    </script>
+
+    <!-- Authentication Logic -->
+    <script>
+        function showError(input, message) {
+            const formGroup = input.closest('.form-group');
+            formGroup.classList.add('error');
+            let errorDiv = formGroup.querySelector('.error-message');
+            if (!errorDiv) {
+                errorDiv = document.createElement('div');
+                errorDiv.className = 'error-message';
+                formGroup.appendChild(errorDiv);
+            }
+            errorDiv.textContent = message;
+        }
+
+        function clearError(input) {
+            const formGroup = input.closest('.form-group');
+            formGroup.classList.remove('error');
+            const errorDiv = formGroup.querySelector('.error-message');
+            if (errorDiv) errorDiv.remove();
+        }
+
+        // Google Sign Up
+        // Google Sign In
+document.getElementById('googleSignIn').addEventListener('click', async () => {
+    const button = document.getElementById('googleSignIn');
+    button.disabled = true;
+    
+    try {
+        const provider = new firebase.auth.GoogleAuthProvider();
+        // Add these configurations
+        const auth = firebase.auth();
+        auth.useDeviceLanguage();
+        
+        // Configure custom parameters
+        provider.setCustomParameters({
+            'prompt': 'select_account'
+        });
+        
+        // Sign in with redirect instead of popup to avoid COOP issues
+        const result = await auth.signInWithRedirect(provider);
+        
+        // Get redirect result
+        const userCred = await auth.getRedirectResult();
+        if (userCred.user) {
+            const idToken = await userCred.user.getIdToken();
+            
+            const response = await fetch('/verify-token', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ 
+                    idToken: idToken,
+                    name: userCred.user.displayName,
+                    email: userCred.user.email 
+                })
+            });
+            
+            const data = await response.json();
+            if (data.success) {
+                window.location.href = '/';
+            } else {
+                throw new Error(data.error || 'Authentication failed');
+            }
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        alert('Authentication failed: ' + (error.message || 'Please try again'));
+    } finally {
+        button.disabled = false;
+    }
+});
+
+// Add error handler for redirect errors
+firebase.auth().getRedirectResult().catch((error) => {
+    console.error("Redirect Error:", error);
+    if (error.code === 'auth/credential-already-in-use') {
+        alert('This account is already linked to another user.');
+    } else {
+        alert('Authentication failed. Please try again.');
+    }
+});
+
+        // Email/Password Sign Up
+       // Replace the Google Sign-In code in both login.html and signup.html
+document.getElementById('googleSignIn').addEventListener('click', async () => {
+    const button = document.getElementById('googleSignIn');
+    button.disabled = true;
+    
+    try {
+        const provider = new firebase.auth.GoogleAuthProvider();
+        const result = await auth.signInWithPopup(provider);
+        const idToken = await result.user.getIdToken();
+        
+        const response = await fetch('/verify-token', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ 
+                idToken: idToken,
+                name: result.user.displayName,
+                email: result.user.email 
+            })
+        });
+        
+        const data = await response.json();
+        if (data.success) {
+            if (window.location.pathname === '/sign-up') {
+                // If on signup page
+                alert('Account created successfully! Please login.');
+                window.location.href = '/login';
+            } else {
+                // If on login page
+                localStorage.setItem('userName', data.user.name || 'User');
+                window.location.href = '/';
+            }
+        } else {
+            throw new Error(data.error || 'Authentication failed');
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        alert('Authentication failed: ' + (error.message || 'Please try again'));
+    } finally {
+        button.disabled = false;
+    }
+});
+
+        // Input validation
+        const inputs = document.querySelectorAll('input');
+        inputs.forEach(input => {
+            input.addEventListener('input', () => clearError(input));
+            input.addEventListener('blur', () => {
+                if (!input.value) {
+                    showError(input, 'This field is required');
+                }
+            });
+        });
+    </script>
+</body>
+</html>

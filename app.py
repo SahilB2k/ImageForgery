@@ -1,18 +1,39 @@
-
-
-from flask import Flask, request, jsonify, render_template
+from flask import Flask, render_template, request, jsonify, session, redirect, url_for
+import firebase_admin
+from firebase_admin import credentials, auth
+from functools import wraps
 import torch
+from flask_cors import CORS
 import torchvision.transforms as transforms
 from PIL import Image
 import io
 import torch.nn as nn
 import numpy as np
 import cv2
+from dotenv import load_dotenv
 import base64
-from scipy.spatial.distance import cdist
 from datetime import datetime
+import os
+
+# Initialize Flask app with secret key
+load_dotenv()
 
 app = Flask(__name__)
+CORS(app, resources={
+    r"/verify-token": {
+        "origins": ["http://localhost:5000"],
+        "methods": ["POST"],
+        "allow_headers": ["Content-Type"]
+    }
+})
+app.secret_key = os.environ.get('SECRET_KEY') # Change this in production
+
+# Initialize Firebase Admin SDK
+try:
+    cred = credentials.Certificate(r"C:\Users\sahil jadhav\Downloads\serviceAccountKey.json.json")
+    firebase_admin.initialize_app(cred)
+except Exception as e:
+    print(f"Firebase initialization error: {e}")
 
 # First Discriminator for fake detection
 class FakeDetector(nn.Module):
@@ -177,34 +198,84 @@ forgery_detector_model.eval()
 # Initialize forgery detector
 detector = CopyMoveDetector(forgery_detector_model)
 
-# Image preprocessing
-transform = transforms.Compose([
-    transforms.Resize((224, 224)),
-    transforms.ToTensor(),
-    transforms.Normalize(mean=[0.5, 0.5, 0.5], std=[0.5, 0.5, 0.5])
-])
+# Authentication middleware
+def login_required(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if 'user_id' not in session:
+            return redirect(url_for('login'))
+        return f(*args, **kwargs)
+    return decorated_function
 
-def preprocess_image(image_bytes):
-    image = Image.open(io.BytesIO(image_bytes)).convert("RGB")
-    return transform(image).unsqueeze(0)
-
+# Routes
 @app.route("/")
 def home():
     return render_template("index.html")
 
-@app.route("/fake-detection")
-def fake_detection_page():
-    return render_template("fake_detection.html")
+@app.route('/login')
+def login():
+    return render_template('Login.html')  # Make sure it matches your template name case
+
+@app.route('/sign-up')
+def signup():
+    return render_template('signup.html')
+
+@app.route('/verify-token', methods=['POST'])
+def verify_token():
+    try:
+        data = request.get_json()
+        if not data or 'idToken' not in data:
+            return jsonify({'success': False, 'error': 'No token provided'}), 400
+
+        id_token = data['idToken']
+        
+        try:
+            # Verify the token
+            decoded_token = auth.verify_id_token(id_token)
+            uid = decoded_token['uid']
+            email = decoded_token.get('email', '')
+            name = data.get('name') or decoded_token.get('name', '')
+
+            # Store user info in session
+            session['user_id'] = uid
+            session['email'] = email
+            session['name'] = name
+            
+            return jsonify({
+                'success': True,
+                'user': {
+                    'uid': uid,
+                    'email': email,
+                    'name': name
+                }
+            })
+        except auth.InvalidIdTokenError:
+            return jsonify({'success': False, 'error': 'Invalid token'}), 401
+            
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+@app.route('/logout')
+def logout():
+    session.clear()
+    return redirect(url_for('home'))
 
 @app.route("/about-us")
 def aboutUs():
     return render_template("aboutUs.html")
 
+@app.route("/fake-detection")
+@login_required  # Protected route
+def fake_detection_page():
+    return render_template("fake_detection.html")
+
 @app.route("/forgery-detection")
+@login_required  # Protected route
 def forgery_detection_page():
     return render_template("forgery_detection.html")
 
 @app.route("/predict", methods=["POST"])
+@login_required  # Protected route
 def predict():
     if "file" not in request.files:
         return jsonify({"error": "No file uploaded"}), 400
@@ -221,10 +292,11 @@ def predict():
         "prediction": "Fake" if confidence > 0.5 else "Real",
         "confidence": float(confidence),
         "timestamp": datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S"),
-        "analyzed_by": "SahilB2k"
+        "analyzed_by": session.get('email', 'Unknown')  # Use session email
     })
 
 @app.route("/detect_forge", methods=["POST"])
+@login_required  # Protected route
 def detect_forge():
     if "file" not in request.files:
         return jsonify({"error": "No file uploaded"}), 400
@@ -254,7 +326,7 @@ def detect_forge():
         "affected_area_percentage": affected_area,
         "num_copied_regions": int(num_regions),
         "timestamp": datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S"),
-        "analyzed_by": "SahilB2k"
+        "analyzed_by": session.get('email', 'Unknown')  # Use session email
     })
 
 if __name__ == "__main__":
