@@ -196,6 +196,10 @@ def home():
 def fake_detection_page():
     return render_template("fake_detection.html")
 
+@app.route("/about-us")
+def aboutUs():
+    return render_template("aboutUs.html")
+
 @app.route("/forgery-detection")
 def forgery_detection_page():
     return render_template("forgery_detection.html")
