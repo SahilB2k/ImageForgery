@@ -1,0 +1,683 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Image Forgery Detection</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&family=Montserrat:wght@700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #4361ee;
+            --primary-light: rgba(67, 97, 238, 0.1);
+            --secondary-color: #3f37c9;
+            --text-color: #2b2d42;
+            --light-bg: #f8f9fa;
+            --real-color: #2d6a4f;
+            --real-bg: #d8f3dc;
+            --fake-color: #9d0208;
+            --fake-bg: #ffccd5;
+            --white: #ffffff;
+            --shadow: 0 10px 30px rgba(67, 97, 238, 0.1);
+            --border-radius: 16px;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Poppins', sans-serif;
+            color: var(--text-color);
+            background: linear-gradient(135deg, #f5f7fa 0%, #e4e5e7 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        
+        .container {
+            background-color: var(--white);
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow);
+            width: 100%;
+            max-width: 900px;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            transition: all 0.3s ease;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            color: var(--white);
+            padding: 30px 20px;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .header::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0) 70%);
+            pointer-events: none;
+        }
+        
+        h1 {
+            font-family: 'Montserrat', sans-serif;
+            font-weight: 700;
+            font-size: 2rem;
+            margin: 0;
+            position: relative;
+        }
+        
+        .content {
+            padding: 30px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 30px;
+        }
+        
+        .upload-section {
+            flex: 1;
+            min-width: 250px;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .upload-title {
+            font-weight: 600;
+            margin-bottom: 20px;
+            color: var(--text-color);
+            font-size: 1.2rem;
+            position: relative;
+            padding-bottom: 10px;
+        }
+        
+        .upload-title::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 50px;
+            height: 3px;
+            background: var(--primary-color);
+            border-radius: 3px;
+        }
+        
+        .file-upload-container {
+            background-color: var(--light-bg);
+            border: 2px dashed #d1d5db;
+            border-radius: 12px;
+            padding: 30px;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            margin-bottom: 20px;
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 180px;
+        }
+        
+        .file-upload-container:hover {
+            border-color: var(--primary-color);
+            background-color: rgba(67, 97, 238, 0.05);
+            transform: translateY(-2px);
+        }
+        
+        .file-upload-container svg {
+            margin-bottom: 15px;
+            fill: var(--primary-color);
+        }
+        
+        .file-upload-text {
+            font-weight: 500;
+            margin-bottom: 8px;
+        }
+        
+        .file-upload-subtext {
+            font-size: 0.85rem;
+            opacity: 0.7;
+        }
+        
+        #file-input {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            opacity: 0;
+        }
+        
+        .preview-section {
+            flex: 1;
+            min-width: 250px;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        #image-preview-container {
+            flex: 1;
+            height: 250px;
+            border-radius: 12px;
+            overflow: hidden;
+            display: none;
+            margin-bottom: 20px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            position: relative;
+            background-color: var(--light-bg);
+        }
+        
+        #image-preview {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            transition: transform 0.3s ease;
+        }
+        
+        #image-preview:hover {
+            transform: scale(1.02);
+        }
+        
+        .analyze-btn {
+            background: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            padding: 15px 25px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(67, 97, 238, 0.2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+        
+        .analyze-btn:hover {
+            background: var(--secondary-color);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(67, 97, 238, 0.3);
+        }
+        
+        .analyze-btn:active {
+            transform: translateY(0);
+        }
+        
+        .analyze-btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            box-shadow: none;
+            transform: none;
+        }
+        
+        .analyze-btn svg {
+            width: 18px;
+            height: 18px;
+        }
+        
+        #result {
+            margin-top: 20px;
+            padding: 25px;
+            border-radius: 12px;
+            transition: all 0.5s ease;
+            display: none;
+            text-align: center;
+            animation: fadeIn 0.5s ease-out;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .real {
+            background-color: var(--real-bg);
+            border: 1px solid rgba(45, 106, 79, 0.3);
+            color: var(--real-color);
+        }
+        
+        .fake {
+            background-color: var(--fake-bg);
+            border: 1px solid rgba(157, 2, 8, 0.3);
+            color: var(--fake-color);
+        }
+        
+        #prediction-text {
+            font-family: 'Montserrat', sans-serif;
+            font-weight: 700;
+            font-size: 1.8rem;
+            margin-bottom: 15px;
+        }
+        
+        #confidence-text {
+            font-size: 1.1rem;
+            font-weight: 500;
+        }
+        
+        .loading {
+            display: none;
+            text-align: center;
+            margin: 20px 0;
+            animation: fadeIn 0.3s ease-out;
+        }
+        
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 4px solid rgba(67, 97, 238, 0.1);
+            border-radius: 50%;
+            border-top: 4px solid var(--primary-color);
+            animation: spin 1s linear infinite;
+            margin: 0 auto 15px;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .confidence-bar-container {
+            height: 10px;
+            background: rgba(0, 0, 0, 0.1);
+            border-radius: 5px;
+            overflow: hidden;
+            margin: 15px 0;
+        }
+        
+        .confidence-bar {
+            height: 100%;
+            width: 0;
+            transition: width 1.5s cubic-bezier(0.19, 1, 0.22, 1);
+        }
+        
+        .real .confidence-bar {
+            background: var(--real-color);
+        }
+        
+        .fake .confidence-bar {
+            background: var(--fake-color);
+        }
+        
+        .result-icon {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+        }
+        
+        /* New class for detect forgery button */
+        .detect-forgery-btn {
+            background: var(--secondary-color);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            padding: 12px 20px;
+            font-size: 0.9rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(67, 97, 238, 0.2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            margin-top: 15px;
+            display: none;
+            animation: fadeIn 0.5s ease-out;
+        }
+        
+        .detect-forgery-btn:hover {
+            background: var(--primary-color);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(67, 97, 238, 0.3);
+        }
+        
+        .detect-forgery-btn:active {
+            transform: translateY(0);
+        }
+        
+        @media (max-width: 768px) {
+            .content {
+                flex-direction: column;
+            }
+            
+            .preview-section {
+                order: -1;
+            }
+            
+            #image-preview-container {
+                height: 200px;
+            }
+            
+            .header {
+                padding: 20px;
+            }
+            
+            h1 {
+                font-size: 1.6rem;
+            }
+            
+            .file-upload-container {
+                padding: 20px;
+                min-height: 150px;
+            }
+            
+            #prediction-text {
+                font-size: 1.5rem;
+            }
+        }
+        
+        /* Accessibility improvements */
+        .sr-only {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            padding: 0;
+            margin: -1px;
+            overflow: hidden;
+            clip: rect(0, 0, 0, 0);
+            white-space: nowrap;
+            border-width: 0;
+        }
+        
+        /* Focus styles for keyboard navigation */
+        .file-upload-container:focus-within {
+            outline: 2px solid var(--primary-color);
+            outline-offset: 2px;
+        }
+        
+        .analyze-btn:focus {
+            outline: 2px solid var(--primary-color);
+            outline-offset: 2px;
+        }
+        
+        /* File upload status */
+        .file-status {
+            margin-top: 10px;
+            font-size: 0.9rem;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Image Forgery Detection</h1>
+        </div>
+        
+        <div class="content">
+            <div class="upload-section">
+                <h2 class="upload-title">Upload an image to analyze</h2>
+                
+                <label for="file-input" class="file-upload-container" tabindex="0" role="button" aria-label="Upload image">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24">
+                        <path d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96zM14 13v4h-4v-4H7l5-5 5 5h-3z"/>
+                    </svg>
+                    <div class="file-upload-text">Click to browse or drop an image</div>
+                    <p class="file-upload-subtext">Supports: JPG, PNG, GIF</p>
+                    <input type="file" id="file-input" accept="image/*" aria-label="Upload image file">
+                </label>
+                <div id="file-status" class="file-status"></div>
+                
+                <div id="loading" class="loading">
+                    <div class="spinner" role="status" aria-label="Loading"></div>
+                    <p>Analyzing your image...</p>
+                </div>
+                
+                <div id="result" role="alert" aria-live="polite">
+                    <div class="result-icon" id="result-icon"></div>
+                    <h2 id="prediction-text"></h2>
+                    <div class="confidence-bar-container">
+                        <div class="confidence-bar" id="confidence-bar"></div>
+                    </div>
+                    <p id="confidence-text"></p>
+                    
+                    <!-- New button for forgery detection -->
+                    <button class="detect-forgery-btn" id="detect-forgery-btn" aria-label="Detect forgery regions">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <circle cx="11" cy="11" r="8"></circle>
+                            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                            <path d="M13 11a2 2 0 1 1-4 0 2 2 0 0 1 4 0z"></path>
+                        </svg>
+                        Detect Forgery Regions
+                    </button>
+                </div>
+            </div>
+            
+            <div class="preview-section">
+                <div id="image-preview-container">
+                    <img id="image-preview" alt="Image preview">
+                </div>
+                <button class="analyze-btn" id="analyze-btn" disabled aria-label="Analyze image">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <line x1="12" y1="16" x2="12" y2="12"></line>
+                        <line x1="12" y1="8" x2="12.01" y2="8"></line>
+                    </svg>
+                    Analyze Image
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // DOM elements
+        const fileInput = document.getElementById('file-input');
+        const imagePreview = document.getElementById('image-preview');
+        const imagePreviewContainer = document.getElementById('image-preview-container');
+        const analyzeBtn = document.getElementById('analyze-btn');
+        const resultDiv = document.getElementById('result');
+        const predictionText = document.getElementById('prediction-text');
+        const confidenceText = document.getElementById('confidence-text');
+        const confidenceBar = document.getElementById('confidence-bar');
+        const loadingDiv = document.getElementById('loading');
+        const fileUploadContainer = document.querySelector('.file-upload-container');
+        const fileStatus = document.getElementById('file-status');
+        const resultIcon = document.getElementById('result-icon');
+        const detectForgeryBtn = document.getElementById('detect-forgery-btn');
+        
+        // Variable to store the current image file
+        let currentImageFile = null;
+        
+        // Drag and drop functionality
+        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+            fileUploadContainer.addEventListener(eventName, preventDefaults, false);
+        });
+        
+        function preventDefaults(e) {
+            e.preventDefault();
+            e.stopPropagation();
+        }
+        
+        ['dragenter', 'dragover'].forEach(eventName => {
+            fileUploadContainer.addEventListener(eventName, () => {
+                fileUploadContainer.style.borderColor = '#4361ee';
+                fileUploadContainer.style.backgroundColor = 'rgba(67, 97, 238, 0.05)';
+                fileUploadContainer.classList.add('drag-active');
+            });
+        });
+        
+        ['dragleave', 'drop'].forEach(eventName => {
+            fileUploadContainer.addEventListener(eventName, () => {
+                fileUploadContainer.style.borderColor = '#d1d5db';
+                fileUploadContainer.style.backgroundColor = '#f8f9fa';
+                fileUploadContainer.classList.remove('drag-active');
+            });
+        });
+        
+        fileUploadContainer.addEventListener('drop', handleDrop);
+        
+        function handleDrop(e) {
+            const dt = e.dataTransfer;
+            const files = dt.files;
+            
+            if (files && files.length) {
+                fileInput.files = files;
+                previewImage();
+            }
+        }
+        
+        // Keyboard accessibility for the file upload container
+        fileUploadContainer.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                fileInput.click();
+            }
+        });
+        
+        // Preview image function
+        function previewImage() {
+            if (fileInput.files && fileInput.files[0]) {
+                const reader = new FileReader();
+                const file = fileInput.files[0];
+                
+                // Store the current file for later use
+                currentImageFile = file;
+                
+                // Update file status
+                fileStatus.textContent = `File selected: ${file.name}`;
+                fileStatus.style.display = 'block';
+                
+                reader.onload = function(e) {
+                    imagePreview.src = e.target.result;
+                    imagePreviewContainer.style.display = 'block';
+                    analyzeBtn.disabled = false;
+                    
+                    // Hide previous result
+                    resultDiv.style.display = 'none';
+                    detectForgeryBtn.style.display = 'none';
+                    
+                    // Animate the preview container
+                    imagePreviewContainer.style.opacity = '0';
+                    setTimeout(() => {
+                        imagePreviewContainer.style.opacity = '1';
+                        imagePreviewContainer.style.transition = 'opacity 0.3s ease';
+                    }, 50);
+                }
+                
+                reader.onerror = function() {
+                    fileStatus.textContent = 'Error reading file. Please try again.';
+                    fileStatus.style.color = 'var(--fake-color)';
+                }
+                
+                reader.readAsDataURL(file);
+            }
+        }
+        
+        // Listen for file input change
+        fileInput.addEventListener('change', previewImage);
+        
+        // Upload and analyze image
+        analyzeBtn.addEventListener('click', uploadImage);
+        
+        function uploadImage() {
+            if (!fileInput.files || !fileInput.files[0]) {
+                alert('Please select an image first');
+                return;
+            }
+            
+            // Show loading
+            loadingDiv.style.display = 'block';
+            analyzeBtn.disabled = true;
+            
+            const formData = new FormData();
+            formData.append('file', fileInput.files[0]);
+            
+            fetch('/predict', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Server error');
+                }
+                return response.json();
+            })
+            .then(data => {
+                // Hide loading
+                loadingDiv.style.display = 'none';
+                analyzeBtn.disabled = false;
+                
+                // Update result content
+                predictionText.textContent = data.prediction;
+                confidenceText.textContent = `Confidence: ${(data.confidence * 100).toFixed(1)}%`;
+                
+                // Set appropriate icon
+                if (data.prediction.toLowerCase() === 'real') {
+                    resultIcon.innerHTML = '✅';
+                } else {
+                    resultIcon.innerHTML = '❌';
+                }
+                
+                // Update confidence bar
+                confidenceBar.style.width = `${data.confidence * 100}%`;
+                
+                // Apply styling based on prediction
+                resultDiv.className = '';
+                resultDiv.classList.add(data.prediction.toLowerCase());
+                
+                // Show result with animation
+                resultDiv.style.display = 'block';
+                
+                // Show the detect forgery button
+                detectForgeryBtn.style.display = 'flex';
+                
+                // Announce result for screen readers
+                const announcement = `Analysis complete. The image is ${data.prediction} with ${(data.confidence * 100).toFixed(1)}% confidence.`;
+                announceForScreenReader(announcement);
+            })
+            .catch(error => {
+                // Hide loading
+                loadingDiv.style.display = 'none';
+                analyzeBtn.disabled = false;
+                
+                console.error('Error:', error);
+                
+                // Show error in file status
+                fileStatus.textContent = 'An error occurred during analysis. Please try again.';
+                fileStatus.style.color = 'var(--fake-color)';
+                fileStatus.style.display = 'block';
+                
+                announceForScreenReader('Error analyzing image. Please try again.');
+            });
+        }
+        
+        // Detect forgery button click handler
+        detectForgeryBtn.addEventListener('click', function() {
+            // Redirect to forgery detection page and pass the current image
+            if (currentImageFile) {
+                // Store the file in sessionStorage for transfer to the next page
+                // Since we can't directly pass File objects between pages, we'll
+                // need to upload it again on the forgery-detection page
+                sessionStorage.setItem('pendingAnalysis', 'true');
+                
+                // Redirect to the forgery detection page
+                window.location.href = '/forgery-detection';
+            }
+        });
+        
+        // Helper function for screen reader announcements
+        function announceForScreenReader(message) {
+            const announcement = document.createElement('div');
+            announcement.setAttribute('aria-live', 'assertive');
+            announcement.setAttribute('class', 'sr-only');
+            announcement.textContent = message;
+            document.body.appendChild(announcement);
+            
+            setTimeout(() => {
+                document.body.removeChild(announcement);
+            }, 1000);
+        }
+    </script>
+</body>
+</html>
