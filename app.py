@@ -1,64 +1,47 @@
-from flask import Flask, render_template, request, jsonify, session, redirect, url_for
-import firebase_admin
-from firebase_admin import credentials, auth
-from functools import wraps
+from flask import Flask, request, jsonify, render_template, redirect, url_for, session
 import torch
-from flask_cors import CORS
 import torchvision.transforms as transforms
 from PIL import Image
 import io
 import torch.nn as nn
 import numpy as np
 import cv2
-from dotenv import load_dotenv
 import base64
-from datetime import datetime
+from scipy.spatial.distance import cdist
+import pyrebase
 import os
+from functools import wraps
+from datetime import datetime, timedelta
 
-# Initialize Flask app with secret key
-load_dotenv()
-
+# Initialize Flask app
 app = Flask(__name__)
-CORS(app, resources={
-    r"/verify-token": {
-        "origins": ["http://localhost:5000"],
-        "methods": ["POST"],
-        "allow_headers": ["Content-Type"]
-    }
-})
-app.secret_key = os.environ.get('SECRET_KEY') # Change this in production
+app.secret_key = os.urandom(24)  # Secret key for session management
+app.permanent_session_lifetime = timedelta(days=5)
 
-# Initialize Firebase Admin SDK
-try:
-    cred = credentials.Certificate(r"C:\Users\sahil jadhav\Downloads\serviceAccountKey.json.json")
-    firebase_admin.initialize_app(cred)
-except Exception as e:
-    print(f"Firebase initialization error: {e}")
+# Firebase Configuration
+firebase_config = {
+    "apiKey": "AIzaSyAnWscCH3Jao-8lqaNbNCleQ675UB_SoO0",
+    "authDomain": "imageforgery-1dc9f.firebaseapp.com",
+    "databaseURL": "https://placeholder-database-url.firebaseio.com",
+    "projectId": "imageforgery-1dc9f",
+    "storageBucket": "imageforgery-1dc9f.appspot.com",
+    "messagingSenderId": "589646432154",
+    "appId": "1:589646432154:web:8e5b547de6a42a52ed1c23"
+}
 
-# First Discriminator for fake detection
-class FakeDetector(nn.Module):
-    def __init__(self):
-        super(FakeDetector, self).__init__()
-        self.main = nn.Sequential(
-            nn.Conv2d(3, 64, 4, 2, 1, bias=False),
-            nn.LeakyReLU(0.2, inplace=True),
-            nn.Conv2d(64, 128, 4, 2, 1, bias=False),
-            nn.BatchNorm2d(128),
-            nn.LeakyReLU(0.2, inplace=True),
-            nn.Conv2d(128, 256, 4, 2, 1, bias=False),
-            nn.BatchNorm2d(256),
-            nn.LeakyReLU(0.2, inplace=True),
-            nn.Conv2d(256, 512, 4, 2, 1, bias=False),
-            nn.BatchNorm2d(512),
-            nn.LeakyReLU(0.2, inplace=True),
-            nn.Conv2d(512, 1, 4, 1, 0, bias=False),
-            nn.Sigmoid()
-        )
+# Initialize Firebase
+firebase = pyrebase.initialize_app(firebase_config)
+auth = firebase.auth()
 
-    def forward(self, x):
-        return self.main(x)
+# Login decorator
+def login_required(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if 'user' not in session:
+            return redirect(url_for('login', next=request.url))
+        return f(*args, **kwargs)
+    return decorated_function
 
-# Second Discriminator for forgery detection
 class Discriminator(nn.Module):
     def __init__(self):
         super(Discriminator, self).__init__()
@@ -86,7 +69,6 @@ class Discriminator(nn.Module):
                 features.append(x)
         return x, features
 
-# Keep your existing CopyMoveDetector class
 class CopyMoveDetector:
     def __init__(self, model):
         self.model = model
@@ -150,6 +132,7 @@ class CopyMoveDetector:
         
         return copy_move_map
 
+# Image processing functions
 def apply_forgery_heatmap(image_bytes, heatmap):
     image = Image.open(io.BytesIO(image_bytes)).convert('RGB')
     image = image.resize((224, 224))
@@ -182,152 +165,237 @@ def apply_forgery_heatmap(image_bytes, heatmap):
     
     return Image.fromarray(overlay)
 
-# Load models
-fake_detector_model = FakeDetector()
-forgery_detector_model = Discriminator()
-
+# Load model and initialize detector
+model = Discriminator()
 try:
-    fake_detector_model.load_state_dict(torch.load("discriminator_model_flask.pth", map_location=torch.device("cpu")))
-    forgery_detector_model.load_state_dict(torch.load("discriminator_model_flask.pth", map_location=torch.device("cpu")))
+    model.load_state_dict(torch.load("discriminator_model_flask.pth", map_location=torch.device("cpu")))
 except Exception as e:
-    print(f"Error loading models: {e}")
+    print(f"Error loading model: {e}")
+model.eval()
 
-fake_detector_model.eval()
-forgery_detector_model.eval()
+detector = CopyMoveDetector(model)
 
-# Initialize forgery detector
-detector = CopyMoveDetector(forgery_detector_model)
+# Image preprocessing
+transform = transforms.Compose([
+    transforms.Resize((224, 224)),
+    transforms.ToTensor(),
+    transforms.Normalize(mean=[0.5, 0.5, 0.5], std=[0.5, 0.5, 0.5])
+])
 
-# Authentication middleware
-def login_required(f):
-    @wraps(f)
-    def decorated_function(*args, **kwargs):
-        if 'user_id' not in session:
-            return redirect(url_for('login'))
-        return f(*args, **kwargs)
-    return decorated_function
-
+def preprocess_image(image_bytes):
+    image = Image.open(io.BytesIO(image_bytes)).convert("RGB")
+    return transform(image).unsqueeze(0)
 # Routes
-@app.route("/")
-def home():
-    return render_template("index.html")
-
-@app.route('/login')
+@app.route("/login", methods=["GET", "POST"])
 def login():
-    return render_template('Login.html')  # Make sure it matches your template name case
-
-@app.route('/sign-up')
-def signup():
-    return render_template('signup.html')
-
-@app.route('/verify-token', methods=['POST'])
-def verify_token():
-    try:
-        data = request.get_json()
-        if not data or 'idToken' not in data:
-            return jsonify({'success': False, 'error': 'No token provided'}), 400
-
-        id_token = data['idToken']
+    current_time = "2025-04-18 10:20:54"  # Updated current time
+    if request.method == "POST":
+        email = request.form.get("email")
+        password = request.form.get("password")
+        username = request.form.get("username")  # In case it's passed from signup
         
         try:
-            # Verify the token
-            decoded_token = auth.verify_id_token(id_token)
-            uid = decoded_token['uid']
-            email = decoded_token.get('email', '')
-            name = data.get('name') or decoded_token.get('name', '')
-
-            # Store user info in session
-            session['user_id'] = uid
-            session['email'] = email
-            session['name'] = name
+            # Authenticate with Firebase
+            user = auth.sign_in_with_email_and_password(email, password)
             
-            return jsonify({
-                'success': True,
-                'user': {
-                    'uid': uid,
-                    'email': email,
-                    'name': name
-                }
-            })
-        except auth.InvalidIdTokenError:
-            return jsonify({'success': False, 'error': 'Invalid token'}), 401
+            # Set session data
+            session.permanent = True
+            session['user'] = user['localId']
+            session['username'] = username if username else email.split('@')[0]  # Use username if provided, otherwise use email prefix
+            session['token'] = user['idToken']
             
-    except Exception as e:
-        return jsonify({'success': False, 'error': str(e)}), 500
+            # Set username in localStorage for welcome message
+            return '''
+                <script>
+                    localStorage.setItem('userName', '{}');
+                    window.location.href = '{}';
+                </script>
+            '''.format(session['username'], url_for('home'))
+            
+        except Exception as e:
+            return render_template("login.html", 
+                                error="Invalid email or password. Please try again.",
+                                current_time=current_time,
+                                username="SahilB2k")
+    
+    return render_template("login.html", 
+                         current_time=current_time,
+                         username="SahilB2k")
 
-@app.route('/logout')
+@app.route("/signup", methods=["GET", "POST"])
+def signup():
+    current_time = "2025-04-18 10:20:54"  # Updated current time
+    if request.method == "POST":
+        username = request.form.get("username")
+        email = request.form.get("email")
+        password = request.form.get("password")
+        confirm_password = request.form.get("confirm_password")
+        
+        if password != confirm_password:
+            return render_template("signup.html", 
+                                error="Passwords do not match.",
+                                current_time=current_time,
+                                username="SahilB2k")
+        
+        try:
+            # Create user in Firebase
+            user = auth.create_user_with_email_and_password(email, password)
+            auth.send_email_verification(user['idToken'])
+            
+            # Pass username to login page
+            return render_template("login.html", 
+                                message="Account created! Please verify your email and login.",
+                                username=username,
+                                current_time=current_time)
+        except Exception as e:
+            error_message = str(e)
+            if "EMAIL_EXISTS" in error_message:
+                return render_template("signup.html", 
+                                    error="Email already exists.",
+                                    current_time=current_time,
+                                    username="SahilB2k")
+            return render_template("signup.html", 
+                                error=f"Error creating account: {error_message}",
+                                current_time=current_time,
+                                username="SahilB2k")
+    
+    return render_template("signup.html", 
+                         current_time=current_time,
+                         username="SahilB2k")
+
+@app.route("/")
+def home():
+    """Home page route"""
+    current_time = "2025-04-18 10:20:54"  # Updated current time
+    return render_template("index.html", 
+                         logged_in='user' in session,
+                         username=session.get('username', 'User'),
+                         current_time=current_time)
+
+@app.route("/reset_password", methods=["GET", "POST"])
+def reset_password():
+    current_time = "2025-04-18 10:20:54"  # Updated current time
+    if request.method == "POST":
+        email = request.form.get("email")
+        
+        try:
+            # Send password reset email through Firebase
+            auth.send_password_reset_email(email)
+            return render_template("login.html", 
+                                message="Password reset email sent! Please check your inbox.",
+                                current_time=current_time,
+                                username="SahilB2k")
+        except Exception as e:
+            return render_template("reset_password.html", 
+                                error="Error sending reset email. Please try again.",
+                                current_time=current_time,
+                                username="SahilB2k")
+    
+    return render_template("reset_password.html", 
+                         current_time=current_time,
+                         username="SahilB2k")
+
+@app.route("/logout")
 def logout():
     session.clear()
     return redirect(url_for('home'))
 
 @app.route("/about-us")
 def aboutUs():
-    return render_template("aboutUs.html")
+    return render_template("aboutUs.html", 
+                         logged_in='user' in session,
+                         username=session.get('username', None))
 
 @app.route("/fake-detection")
-@login_required  # Protected route
 def fake_detection_page():
-    return render_template("fake_detection.html")
+    """Fake detection page - no login required"""
+    return render_template("fake_detection.html", 
+                         logged_in='user' in session,
+                         username=session.get('username', None))
 
 @app.route("/forgery-detection")
-@login_required  # Protected route
+@login_required
 def forgery_detection_page():
-    return render_template("forgery_detection.html")
+    """Forgery detection page - login required"""
+    return render_template("forgery_detection.html", 
+                         logged_in=True,
+                         username=session.get('username', None))
 
 @app.route("/predict", methods=["POST"])
-@login_required  # Protected route
 def predict():
+    """Handle fake image detection"""
     if "file" not in request.files:
         return jsonify({"error": "No file uploaded"}), 400
 
-    file = request.files["file"]
-    image_bytes = file.read()
-    input_tensor = preprocess_image(image_bytes)
+    try:
+        file = request.files["file"]
+        image_bytes = file.read()
+        input_tensor = preprocess_image(image_bytes)
 
-    with torch.no_grad():
-        output = fake_detector_model(input_tensor)
-        confidence = output.mean().item()
+        with torch.no_grad():
+            output_tensor, _ = model(input_tensor)
+            confidence = output_tensor.mean().item()
 
-    return jsonify({
-        "prediction": "Fake" if confidence > 0.5 else "Real",
-        "confidence": float(confidence),
-        "timestamp": datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S"),
-        "analyzed_by": session.get('email', 'Unknown')  # Use session email
-    })
+        prediction = "Fake" if confidence > 0.5 else "Real"
+        
+        return jsonify({
+            "prediction": prediction, 
+            "confidence": float(confidence)
+        })
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
 @app.route("/detect_forge", methods=["POST"])
-@login_required  # Protected route
+@login_required
 def detect_forge():
+    """Handle forgery detection - login required"""
     if "file" not in request.files:
         return jsonify({"error": "No file uploaded"}), 400
 
-    file = request.files["file"]
-    image_bytes = file.read()
-    
-    input_tensor = preprocess_image(image_bytes)
-    forgery_map = detector.generate_forgery_map(input_tensor)
-    visualization = apply_forgery_heatmap(image_bytes, forgery_map)
-    
-    buffered = io.BytesIO()
-    visualization.save(buffered, format="PNG")
-    visualization_base64 = base64.b64encode(buffered.getvalue()).decode('utf-8')
-    
-    with torch.no_grad():
-        output, _ = forgery_detector_model(input_tensor)
-        confidence = output.mean().item()
-    
-    affected_area = float(np.mean(forgery_map > 0.5) * 100)
-    num_regions = len(np.unique(forgery_map > 0.5)) - 1
-    
-    return jsonify({
-        "prediction": "Fake" if confidence > 0.5 else "Real",
-        "confidence": float(confidence),
-        "heatmap": visualization_base64,
-        "affected_area_percentage": affected_area,
-        "num_copied_regions": int(num_regions),
-        "timestamp": datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S"),
-        "analyzed_by": session.get('email', 'Unknown')  # Use session email
-    })
+    try:
+        file = request.files["file"]
+        image_bytes = file.read()
+        
+        input_tensor = preprocess_image(image_bytes)
+        forgery_map = detector.generate_forgery_map(input_tensor)
+        visualization = apply_forgery_heatmap(image_bytes, forgery_map)
+        
+        buffered = io.BytesIO()
+        visualization.save(buffered, format="PNG")
+        visualization_base64 = base64.b64encode(buffered.getvalue()).decode('utf-8')
+        
+        with torch.no_grad():
+            output, _ = model(input_tensor)
+            confidence = output.mean().item()
+        
+        affected_area = float(np.mean(forgery_map > 0.5) * 100)
+        num_regions = len(np.unique(forgery_map > 0.5)) - 1
+        
+        current_time = datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S")
+        
+        return jsonify({
+            "prediction": "Fake" if confidence > 0.5 else "Real",
+            "confidence": float(confidence),
+            "heatmap": visualization_base64,
+            "affected_area_percentage": affected_area,
+            "num_copied_regions": int(num_regions),
+            "timestamp": current_time,
+            "analyzed_by": session.get('username', 'Unknown user')
+        })
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+@app.errorhandler(404)
+def page_not_found(e):
+    return render_template('404.html', 
+                         logged_in='user' in session,
+                         username=session.get('username', None)), 404
+
+@app.errorhandler(500)
+def internal_server_error(e):
+    return render_template('500.html', 
+                         logged_in='user' in session,
+                         username=session.get('username', None)), 500
 
 if __name__ == "__main__":
     app.run(debug=True)

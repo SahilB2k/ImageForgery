@@ -6,7 +6,8 @@
     <title>Image Forgery Detection</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&family=Montserrat:wght@700&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/solid.min.css" rel="stylesheet">  
     <style>
         :root {
             --primary-color: #4361ee;
@@ -422,9 +423,279 @@
             border-radius: 8px;
             background-color: rgba(0, 0, 0, 0.05);
         }
+        .navbar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            z-index: 1000;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            background-color: #6f6fff;
+        }
+        
+        .nav-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 1rem 1.5rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .logo a {
+            display: flex;
+            align-items: center;
+            text-decoration: none;
+            color: var(--primary-dark);
+            font-weight: 700;
+            font-size: 1.5rem;
+            gap: 0.5rem;
+        }
+        
+        .logo i {
+            font-size: 1.8rem;
+            background: linear-gradient(to right, var(--primary), var(--accent));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        
+        .nav-links {
+            display: flex;
+            gap: 2rem;
+        }
+        
+        .nav-link {
+            text-decoration: none;
+            color: var(--dark);
+            font-weight: 500;
+            transition: var(--transition);
+            position: relative;
+        }
+        
+        .nav-link::after {
+            content: '';
+            position: absolute;
+            bottom: -5px;
+            left: 0;
+            width: 0;
+            height: 2px;
+            background: linear-gradient(to right, var(--primary), var(--accent));
+            transition: var(--transition);
+        }
+        
+        .nav-link:hover::after,
+        .nav-link.active::after {
+            width: 100%;
+        }
+        
+        .auth-buttons {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+        }
+        
+        .btn-login {
+            text-decoration: none;
+            color: var(--primary);
+            font-weight: 500;
+            transition: var(--transition);
+        }
+        
+        .btn-login:hover {
+            color: var(--primary-dark);
+        }
+        
+        .btn-signup {
+            text-decoration: none;
+            background: linear-gradient(to right, var(--primary), var(--primary-dark));
+            color: white;
+            padding: 0.5rem 1.25rem;
+            border-radius: 50px;
+            font-weight: 500;
+            transition: var(--transition);
+        }
+        
+        .btn-signup:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 6px rgba(99, 102, 241, 0.2);
+        }
+        
+        .mobile-menu-btn {
+            display: none;
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            color: var(--dark);
+            cursor: pointer;
+        }
+        
+        .mobile-menu {
+            display: none;
+            position: fixed;
+            top: 72px;
+            left: 0;
+            right: 0;
+            background: white;
+            padding: 1rem;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            z-index: 999;
+            flex-direction: column;
+        }
+        
+        .mobile-link {
+            text-decoration: none;
+            color: var(--dark);
+            padding: 0.75rem;
+            font-weight: 500;
+            border-radius: 8px;
+            transition: var(--transition);
+        }
+        
+        .mobile-link:hover {
+            background: rgba(99, 102, 241, 0.1);
+            color: var(--primary);
+        }
+        
+        /* Add to your existing media queries */
+        @media (max-width: 768px) {
+            .nav-links, .auth-buttons {
+                display: none;
+            }
+        
+            .mobile-menu-btn {
+                display: block;
+            }
+        
+            .mobile-menu.active {
+                display: flex;
+            }
+        
+            .hero {
+                padding-top: 5rem; /* Add some padding to account for fixed navbar */
+            }
+            welcome-banner {
+                background: linear-gradient(135deg, #4f46e5 0%, #8b5cf6 100%);
+                color: white;
+                padding: 1rem;
+                text-align: center;
+                position: fixed;
+                top: 1rem;
+                right: 1rem;
+                border-radius: 8px;
+                box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+                animation: slideIn 0.5s ease-out, fadeOut 0.5s ease-out 3s forwards;
+                z-index: 1000;
+            }
+            
+            @keyframes slideIn {
+                from {
+                    transform: translateX(100%);
+                    opacity: 0;
+                }
+                to {
+                    transform: translateX(0);
+                    opacity: 1;
+                }
+            }
+            
+            @keyframes fadeOut {
+                from {
+                    opacity: 1;
+                }
+                to {
+                    opacity: 0;
+                    display: none;
+                }
+            }
+        }
+        .user-email {
+            color: var(--dark);
+            margin-right: 1rem;
+            font-weight: 500;
+        }
+        
+        .welcome-banner {
+            background: linear-gradient(135deg, #4f46e5 0%, #8b5cf6 100%);
+            color: white;
+            padding: 1rem 2rem;
+            text-align: center;
+            position: fixed;
+            top: 1rem;
+            right: 1rem;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            animation: slideIn 0.5s ease-out, fadeOut 0.5s ease-out 3s forwards;
+            z-index: 1000;
+        }
+        
+        /* Fix mobile menu z-index and transition */
+        .mobile-menu {
+            display: none;
+            position: fixed;
+            top: 72px;
+            left: 0;
+            right: 0;
+            background: white;
+            padding: 1rem;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            z-index: 999;
+            flex-direction: column;
+            transition: transform 0.3s ease-in-out;
+        }
+        
+        .mobile-menu.active {
+            display: flex;
+            transform: translateY(0);
+        }
+        /* Add these to your existing styles */
+
     </style>
 </head>
 <body>
+
+
+    <nav class="navbar">
+        <div class="nav-container">
+            <div class="logo">
+                <a href="{{ url_for('home') }}">
+                    <i class="fas fa-camera-retro"></i>
+                    <span>ImageAI</span>
+                </a>
+            </div>
+            <div class="nav-links">
+                <a href="{{ url_for('home') }}" class="nav-link {{ 'active' if request.endpoint == 'home' }}">Home</a>
+                <a href="{{ url_for('aboutUs') }}" class="nav-link {{ 'active' if request.endpoint == 'aboutUs' }}">About Us</a>
+            </div>
+            <div class="auth-buttons">
+                {% if logged_in %}
+                    <span class="user-email">{{ username }}</span>
+                    <a href="{{ url_for('logout') }}" class="btn-login">Logout</a>
+                {% else %}
+                    <a href="{{ url_for('login') }}" class="btn-login">Login</a>
+                    <a href="{{ url_for('signup') }}" class="btn-signup">Sign Up</a>
+                {% endif %}
+            </div>
+            <button class="mobile-menu-btn" aria-label="Toggle mobile menu">
+                <i class="fas fa-bars"></i>
+            </button>
+        </div>
+    </nav>
+    
+    <!-- Fix mobile menu -->
+    <div class="mobile-menu">
+        <a href="{{ url_for('home') }}" class="mobile-link">Home</a>
+        <a href="{{ url_for('aboutUs') }}" class="mobile-link">About Us</a>
+        <a href="{{ url_for('fake_detection_page') }}" class="mobile-link">Fake Detection</a>
+        {% if logged_in %}
+            <a href="{{ url_for('forgery_detection_page') }}" class="mobile-link">Forgery Detection</a>
+            <a href="{{ url_for('logout') }}" class="mobile-link">Logout</a>
+        {% else %}
+            <a href="{{ url_for('login') }}" class="mobile-link">Login</a>
+            <a href="{{ url_for('signup') }}" class="mobile-link">Sign Up</a>
+        {% endif %}
+    </div>
     <div class="container">
         <div class="header">
             <h1>Image Forgery Detection</h1>
@@ -501,6 +772,12 @@
         const fileStatus = document.getElementById('file-status');
         const resultIcon = document.getElementById('result-icon');
         const detectForgeryBtn = document.getElementById('detect-forgery-btn');
+        const mobileMenuBtn = document.querySelector('.mobile-menu-btn');
+    const mobileMenu = document.querySelector('.mobile-menu');
+
+    mobileMenuBtn.addEventListener('click', () => {
+        mobileMenu.classList.toggle('active');
+    });
         
         // Variable to store the current image file
         let currentImageFile = null;
@@ -703,6 +980,72 @@
                 document.body.removeChild(announcement);
             }, 1000);
         }
+
+
+
+       
+        document.addEventListener('DOMContentLoaded', () => {
+             // Welcome message handling
+             const userNameElement = document.getElementById('userName');
+             const currentUser = "SahilB2k"; // Using the current user's login
+             const currentTime = "2025-04-19 07:41:57"; // Using the current UTC time
+             const welcomeMessage = document.getElementById('welcomeMessage');
+        
+            if (currentUser) {
+                userNameElement.textContent = currentUser;
+                welcomeMessage.style.display = 'block';
+                    
+                    // Hide the welcome message after 3.5 seconds
+                setTimeout(() => {
+                    welcomeMessage.style.animation = 'fadeOut 0.5s ease-out forwards';
+                    setTimeout(() => {
+                        welcomeMessage.style.display = 'none';
+                    }, 500);
+                }, 3000);
+            }
+        
+            // Mobile menu handling
+            const mobileMenuBtn = document.querySelector('.mobile-menu-btn');
+            const mobileMenu = document.querySelector('.mobile-menu');
+            const navbar = document.querySelector('.navbar');
+        
+            mobileMenuBtn.addEventListener('click', () => {
+                mobileMenu.classList.toggle('active');
+                // Add aria-expanded attribute for accessibility
+                const isExpanded = mobileMenu.classList.contains('active');
+                mobileMenuBtn.setAttribute('aria-expanded', isExpanded);
+            });
+        
+            // Close mobile menu when clicking outside
+            document.addEventListener('click', (e) => {
+                if (!mobileMenu.contains(e.target) && !mobileMenuBtn.contains(e.target)) {
+                    mobileMenu.classList.remove('active');
+                    mobileMenuBtn.setAttribute('aria-expanded', 'false');
+                }
+            })
+        
+            // Handle active states for navigation links
+            const currentPath = window.location.pathname;
+            document.querySelectorAll('.nav-link').forEach(link => {
+                if (link.getAttribute('href') === currentPath) {
+                    link.classList.add('active');
+                }
+            });
+        
+            // Add smooth scrolling for anchor links
+            document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+                anchor.addEventListener('click', function (e) {
+                    e.preventDefault();
+                    const target = document.querySelector(this.getAttribute('href'));
+                    if (target) {
+                        target.scrollIntoView({
+                            behavior: 'smooth'
+                         });
+                    }
+                });
+            });
+        });
+        
     </script>
 </body>
 </html>

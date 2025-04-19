@@ -6,7 +6,6 @@
     <title>Image Analysis Tool</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=Montserrat:wght@700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         :root {
@@ -208,6 +207,7 @@
             background: linear-gradient(to right, var(--secondary), var(--accent));
             color: white;
             box-shadow: 0 4px 6px rgba(139, 92, 246, 0.25);
+            margin-top: 24px;
         }
 
         .btn:hover {
@@ -478,43 +478,143 @@
                 }
             }
         }
+        .user-email {
+            color: var(--dark);
+            margin-right: 1rem;
+            font-weight: 500;
+        }
+        
+        .welcome-banner {
+            background: linear-gradient(135deg, #4f46e5 0%, #8b5cf6 100%);
+            color: white;
+            padding: 1rem 2rem;
+            text-align: center;
+            position: fixed;
+            top: 1rem;
+            right: 1rem;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            animation: slideIn 0.5s ease-out, fadeOut 0.5s ease-out 3s forwards;
+            z-index: 1000;
+        }
+        
+        /* Fix mobile menu z-index and transition */
+        .mobile-menu {
+            display: none;
+            position: fixed;
+            top: 72px;
+            left: 0;
+            right: 0;
+            background: white;
+            padding: 1rem;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            z-index: 999;
+            flex-direction: column;
+            transition: transform 0.3s ease-in-out;
+        }
+        
+        .mobile-menu.active {
+            display: flex;
+            transform: translateY(0);
+        }
+        
+        /* Improve accessibility */
+        .btn:focus,
+        .nav-link:focus,
+        .mobile-link:focus {
+            outline: 2px solid var(--primary);
+            outline-offset: 2px;
+        }
+        
+        /* Fix card responsiveness */
+        @media (max-width: 768px) {
+            .cards-container {
+                gap: 1.5rem;
+            }
+            
+            .card {
+                width: 100%;
+                max-width: 100%;
+            }
+        }
+        .user-email {
+            color: var(--dark);
+            margin-right: 1rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .user-email::before {
+            content: '\f007';  /* User icon */
+            font-family: 'Font Awesome 5 Free';
+            font-weight: 900;
+            color: var(--primary);
+        }
+        
+        /* Add a lock icon for the login-required button */
+        .btn-secondary.login-required::before {
+            content: '\f023';
+            font-family: 'Font Awesome 5 Free';
+            font-weight: 900;
+            margin-right: 0.5rem;
+        }
+        
+        .btn-login:hover{
+            color:red;
+        }
+        /* Add these to your existing styles */
+
     </style>
 </head>
 <body>
-    <nav class="navbar">
-        <div class="nav-container">
-            <div class="logo">
-                <a href="{{ url_for('home') }}">
-                    <i class="fas fa-camera-retro"></i>
-                    <span>ImageAI</span>
-                </a>
-            </div>
-            <div class="nav-links">
-                <a href="{{ url_for('home') }}" class="nav-link {{ 'active' if request.endpoint == 'home' }}">Home</a>
-                <a href="{{ url_for('aboutUs') }}" class="nav-link {{ 'active' if request.endpoint == 'aboutUs' }}">About Us</a>
-            </div>
-            <div class="auth-buttons">
-                <a href="{{ url_for('fake_detection_page') }}" class="btn-login">Login</a>
-                <a href="{{ url_for('forgery_detection_page') }}" class="btn-signup">Sign Up</a>
-            </div>
-            <button class="mobile-menu-btn">
-                <i class="fas fa-bars"></i>
-            </button>
+    <!-- Fix navbar display logic -->
+<nav class="navbar">
+    <div class="nav-container">
+        <div class="logo">
+            <a href="{{ url_for('home') }}">
+                <i class="fas fa-camera-retro"></i>
+                <span>ImageAI</span>
+            </a>
         </div>
-    </nav>
-    
-    <!-- Mobile Menu -->
-    <div class="mobile-menu">
-        <a href="{{ url_for('home') }}" class="mobile-link">Home</a>
-        <a href="{{ url_for('aboutUs') }}" class="mobile-link">About Us</a>
-        <a href="{{ url_for('fake_detection_page') }}" class="mobile-link">Fake Detection</a>
-        <a href="{{ url_for('forgery_detection_page') }}" class="mobile-link">Forgery Detection</a>
+        <div class="nav-links">
+            <a href="{{ url_for('home') }}" class="nav-link {{ 'active' if request.endpoint == 'home' }}">Home</a>
+            <a href="{{ url_for('aboutUs') }}" class="nav-link {{ 'active' if request.endpoint == 'aboutUs' }}">About Us</a>
+        </div>
+        <div class="auth-buttons">
+            {% if logged_in %}
+                <span class="user-email">{{ username }}</span>
+                <a href="{{ url_for('logout') }}" class="btn-login">Logout</a>
+            {% else %}
+                <a href="{{ url_for('login') }}" class="btn-login">Login</a>
+                <a href="{{ url_for('signup') }}" class="btn-signup">Sign Up</a>
+            {% endif %}
+        </div>
+        <button class="mobile-menu-btn" aria-label="Toggle mobile menu">
+            <i class="fas fa-bars"></i>
+        </button>
     </div>
+</nav>
+
+<!-- Fix mobile menu -->
+<div class="mobile-menu">
+    <a href="{{ url_for('home') }}" class="mobile-link">Home</a>
+    <a href="{{ url_for('aboutUs') }}" class="mobile-link">About Us</a>
+    <a href="{{ url_for('fake_detection_page') }}" class="mobile-link">Fake Detection</a>
+    {% if logged_in %}
+        <a href="{{ url_for('forgery_detection_page') }}" class="mobile-link">Forgery Detection</a>
+        <a href="{{ url_for('logout') }}" class="mobile-link">Logout</a>
+    {% else %}
+        <a href="{{ url_for('login') }}" class="mobile-link">Login</a>
+        <a href="{{ url_for('signup') }}" class="mobile-link">Sign Up</a>
+    {% endif %}
+</div>
     
     
     <div class="hero">
         <div id="welcomeMessage" style="display: none;" class="welcome-banner">
-            Welcome back, <span id="userName">User</span>!
+            Welcome back, <span id="userName">{{ username }}</span>!
         </div>
         <div class="container">
             <div class="content-box">
@@ -531,7 +631,7 @@
                         <div class="card-content">
                             <h3 class="card-title">Fake Image Detection</h3>
                             <p class="card-description">Identify AI-generated or manipulated images using advanced machine learning algorithms.</p>
-                            <a href="/fake-detection" class="btn btn-primary">Analyze Now</a>
+                            <a href="{{ url_for('fake_detection_page') }}" class="btn btn-primary">Analyze Now</a>
                         </div>
                     </div>
                     
@@ -544,7 +644,11 @@
                         <div class="card-content">
                             <h3 class="card-title">Forgery Area Detection</h3>
                             <p class="card-description">Locate specific areas in an image that have been tampered with or modified.</p>
-                            <a href="/forgery-detection" class="btn btn-secondary">Analyze Now</a>
+                            {% if logged_in %}
+                                <a href="{{ url_for('forgery_detection_page') }}" class="btn btn-secondary">Analyze Now</a>
+                            {% else %}
+                                <a href="{{ url_for('login') }}?next={{ url_for('forgery_detection_page') }}" class="btn btn-secondary">Login to Access</a>
+                            {% endif %}
                         </div>
                     </div>
                 </div>
