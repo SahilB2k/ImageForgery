@@ -3,10 +3,12 @@ services:
     name: imageforgery
     env: python
     buildCommand: |
-      python -m pip install --upgrade pip wheel setuptools
-      pip install --no-cache-dir -r requirements.txt
-      pip install --no-cache-dir -r torch-requirements.txt
-    startCommand: gunicorn --bind 0.0.0.0:$PORT app:app
+      python -m pip install --upgrade pip==21.3.1
+      pip install --no-cache-dir -r requirements-minimal.txt
+      pip install --no-cache-dir -r requirements-torch.txt
+    startCommand: gunicorn app:app
     envVars:
       - key: PYTHON_VERSION
-        value: 3.9.16
+        value: 3.8.12
+      - key: PYTHONPATH
+        value: .

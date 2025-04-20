@@ -1,13 +1,16 @@
 #!/bin/bash
 set -e
 
-echo "Upgrading pip..."
-pip install --upgrade pip==22.3.1
+# Use specific pip version known to work well
+echo "Installing specific pip version..."
+python -m pip install --upgrade pip==21.3.1
 
-echo "Installing base requirements..."
-pip install --no-cache-dir -r requirements.txt
+# Install minimal requirements first
+echo "Installing minimal requirements..."
+pip install --no-cache-dir -r requirements-minimal.txt
 
-echo "Installing PyTorch CPU..."
-pip install --no-cache-dir -r torch-requirements.txt
+# Install PyTorch and numpy
+echo "Installing PyTorch and numpy..."
+pip install --no-cache-dir -r requirements-torch.txt
 
 echo "Installation completed successfully"
