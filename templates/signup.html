@@ -192,6 +192,136 @@
                 left: 1rem;
             }
         }
+
+
+        /* Add password strength indicator styles */
+        .password-strength {
+            height: 5px;
+            margin-top: 5px;
+            border-radius: 3px;
+            transition: var(--transition);
+        }
+
+        .strength-weak { background-color: #ef4444; }
+        .strength-medium { background-color: #f59e0b; }
+        .strength-strong { background-color: #10b981; }
+
+        .password-requirements {
+            background: rgba(99, 102, 241, 0.1);
+            border-radius: 8px;
+            padding: 1rem;
+            margin-top: 0.5rem;
+            font-size: 0.85rem;
+            color: var(--gray);
+        }
+
+        .password-requirements ul {
+            list-style: none;
+            margin: 0.5rem 0;
+            padding-left: 0.5rem;
+        }
+
+        .password-requirements li {
+            margin: 0.25rem 0;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .password-requirements li::before {
+            content: '•';
+            color: var(--primary);
+        }
+
+        /* Add these styles to your existing style section */
+.verification-notice {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.8);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.3s ease;
+}
+
+.verification-notice.show {
+    opacity: 1;
+    visibility: visible;
+}
+
+.notice-content {
+    background: white;
+    padding: 2rem;
+    border-radius: 20px;
+    max-width: 400px;
+    width: 90%;
+    text-align: center;
+    box-shadow: var(--card-shadow);
+    transform: translateY(-20px);
+    transition: transform 0.3s ease;
+}
+
+.verification-notice.show .notice-content {
+    transform: translateY(0);
+}
+
+.notice-icon {
+    font-size: 3rem;
+    color: var(--primary);
+    margin-bottom: 1rem;
+}
+
+.notice-content h3 {
+    color: var(--dark);
+    margin-bottom: 1rem;
+    font-family: 'Montserrat', sans-serif;
+}
+
+.notice-content p {
+    color: var(--gray);
+    margin-bottom: 1rem;
+    font-size: 0.95rem;
+    line-height: 1.5;
+}
+
+.notice-details {
+    background: rgba(99, 102, 241, 0.1);
+    padding: 1rem;
+    border-radius: 8px;
+    margin: 1rem 0;
+}
+
+.notice-details p {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin: 0.5rem 0;
+    color: var(--dark);
+    font-size: 0.85rem;
+}
+
+.goto-login-btn {
+    display: inline-block;
+    padding: 0.75rem 2rem;
+    background: linear-gradient(to right, var(--primary), var(--primary-dark));
+    color: white;
+    border-radius: 8px;
+    text-decoration: none;
+    font-weight: 500;
+    transition: var(--transition);
+    margin-top: 1rem;
+}
+
+.goto-login-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 6px rgba(99, 102, 241, 0.2);
+}
     </style>
 </head>
 <body>
@@ -204,6 +334,9 @@
         <div class="signup-header">
             <h1>Create Account</h1>
             <p>Join us to access all features</p>
+            <small style="color: var(--gray); display: block; margin-top: 0.5rem;">
+                2025-04-20 15:20:25 UTC
+            </small>
         </div>
 
         {% if error %}
@@ -213,10 +346,10 @@
         </div>
         {% endif %}
 
-        <form method="POST" action="{{ url_for('signup') }}">
+        <form method="POST" action="{{ url_for('signup') }}" id="signupForm">
             <div class="form-group">
                 <label for="username">Username</label>
-                <input type="text" id="username" name="username" required placeholder="Choose a username">
+                <input type="text" id="username" name="username" required minlength="3" placeholder="Choose a username">
             </div>
         
             <div class="form-group">
@@ -226,19 +359,45 @@
 
             <div class="form-group">
                 <label for="password">Password</label>
-                <input type="password" id="password" name="password" required minlength="6" placeholder="Enter your password">
-                <div class="form-text">Password must be at least 6 characters long</div>
+                <input type="password" id="password" name="password" required placeholder="Enter your password">
+                <div class="password-strength"></div>
+                <div class="password-requirements">
+                    Password requirements:
+                    <ul>
+                        <li>At least 8 characters long</li>
+                        <li>At least one uppercase letter</li>
+                        <li>At least one lowercase letter</li>
+                        <li>At least one number</li>
+                        <li>At least one special character (!@#$%^&* etc.)</li>
+                    </ul>
+                </div>
             </div>
 
             <div class="form-group">
                 <label for="confirm_password">Confirm Password</label>
-                <input type="password" id="confirm_password" name="confirm_password" required minlength="6" placeholder="Confirm your password">
+                <input type="password" id="confirm_password" name="confirm_password" required placeholder="Confirm your password">
             </div>
 
             <button type="submit" class="signup-btn">
                 Create Account
             </button>
         </form>
+
+        <!-- Add this right after the form closing tag and before signup-footer -->
+<div class="verification-notice" style="display: none;">
+    <div class="notice-content">
+        <div class="notice-icon">
+            <i class="fas fa-envelope-open-text"></i>
+        </div>
+        <h3>Verify Your Email</h3>
+        <p>A verification link has been sent to your email address. Please check your inbox and click the link to activate your account.</p>
+        <div class="notice-details">
+            <p><i class="fas fa-info-circle"></i> Check your spam folder if you don't see the email</p>
+            <p><i class="fas fa-clock"></i> The link will expire in 24 hours</p>
+        </div>
+        <a href="{{ url_for('login') }}" class="goto-login-btn">Go to Login</a>
+    </div>
+</div>
 
         <div class="signup-footer">
             <p>Already have an account? <a href="{{ url_for('login') }}">Login</a></p>
@@ -255,31 +414,125 @@
             }, 0);
         });
 
+        // Password strength indicator
+        const passwordInput = document.getElementById('password');
+        const strengthIndicator = document.querySelector('.password-strength');
+
+        passwordInput.addEventListener('input', () => {
+            const password = passwordInput.value;
+            let strength = 0;
+
+            if (password.length >= 8) strength++;
+            if (/[A-Z]/.test(password)) strength++;
+            if (/[a-z]/.test(password)) strength++;
+            if (/[0-9]/.test(password)) strength++;
+            if (/[^A-Za-z0-9]/.test(password)) strength++;
+
+            strengthIndicator.style.width = `${(strength / 5) * 100}%`;
+            strengthIndicator.className = 'password-strength';
+            
+            if (strength <= 2) {
+                strengthIndicator.classList.add('strength-weak');
+            } else if (strength <= 4) {
+                strengthIndicator.classList.add('strength-medium');
+            } else {
+                strengthIndicator.classList.add('strength-strong');
+            }
+        });
+
         // Form validation
-        const form = document.querySelector('form');
+        const form = document.getElementById('signupForm');
         form.addEventListener('submit', (e) => {
+            const username = document.getElementById('username').value;
             const email = document.getElementById('email').value;
             const password = document.getElementById('password').value;
             const confirmPassword = document.getElementById('confirm_password').value;
 
-            if (!email || !password || !confirmPassword) {
+            // Check if all fields are filled
+            if (!username || !email || !password || !confirmPassword) {
                 e.preventDefault();
                 alert('Please fill in all fields');
                 return;
             }
 
+            // Validate username length
+            if (username.length < 3) {
+                e.preventDefault();
+                alert('Username must be at least 3 characters long');
+                return;
+            }
+
+            // Validate email format
+            const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+            if (!emailRegex.test(email)) {
+                e.preventDefault();
+                alert('Please enter a valid email address');
+                return;
+            }
+
+            // Validate password
+            const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*])[A-Za-z\d!@#$%^&*]{8,}$/;
+            if (!passwordRegex.test(password)) {
+                e.preventDefault();
+                alert('Password must meet all requirements');
+                return;
+            }
+
+            // Check if passwords match
             if (password !== confirmPassword) {
                 e.preventDefault();
                 alert('Passwords do not match');
                 return;
             }
-
-            if (password.length < 6) {
-                e.preventDefault();
-                alert('Password must be at least 6 characters long');
-                return;
-            }
         });
+
+        // Add this to your existing JavaScript
+document.getElementById('signupForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    
+    // Your existing validation code here...
+    
+    // If validation passes, show the verification notice
+    const verificationNotice = document.querySelector('.verification-notice');
+    verificationNotice.style.display = 'flex';
+    setTimeout(() => {
+        verificationNotice.classList.add('show');
+    }, 10);
+
+    // Submit the form
+    try {
+        const formData = new FormData(e.target);
+        const response = await fetch(e.target.action, {
+            method: 'POST',
+            body: formData
+        });
+
+        if (response.ok) {
+            // Form submitted successfully
+            // The verification notice is already showing
+        } else {
+            // Handle error
+            verificationNotice.style.display = 'none';
+            verificationNotice.classList.remove('show');
+            alert('An error occurred. Please try again.');
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        verificationNotice.style.display = 'none';
+        verificationNotice.classList.remove('show');
+        alert('An error occurred. Please try again.');
+    }
+});
+
+// Allow clicking outside the notice to close it
+document.querySelector('.verification-notice').addEventListener('click', (e) => {
+    if (e.target.classList.contains('verification-notice')) {
+        e.target.classList.remove('show');
+        setTimeout(() => {
+            e.target.style.display = 'none';
+        }, 300);
+    }
+});
     </script>
 </body>
 </html>
