@@ -1,9 +1,28 @@
-Flask==2.0.1
-Werkzeug==2.0.3
-gunicorn==20.1.0
-Pillow==8.4.0
-numpy==1.21.0
-click==8.0.4
-itsdangerous==2.0.1
-Jinja2==3.0.3
-MarkupSafe==2.0.1
+# Web Framework and Server
+Flask==2.3.3
+Werkzeug==2.3.7
+gunicorn==21.2.0
+click==8.1.7
+itsdangerous==2.1.2
+Jinja2==3.1.2
+MarkupSafe==2.1.3
+
+# Image Processing
+Pillow==10.0.1
+
+# Machine Learning
+--find-links https://download.pytorch.org/whl/torch_stable.html
+torch==2.0.1+cpu
+torchvision==0.15.2+cpu
+numpy==1.24.3
+
+# HTTP Handling and Utilities
+requests==2.31.0
+urllib3==2.0.4
+certifi==2023.7.22
+charset-normalizer==3.2.0
+idna==3.4
+
+# Additional Dependencies
+python-dotenv==1.0.0
+tqdm==4.66.1
