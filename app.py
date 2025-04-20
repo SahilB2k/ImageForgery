@@ -7,7 +7,6 @@ from PIL import Image
 import io
 import torch.nn as nn
 import numpy as np
-import cv2
 import base64
 from scipy.spatial.distance import cdist
 import pyrebase
