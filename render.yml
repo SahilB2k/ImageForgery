@@ -4,8 +4,10 @@ services:
     env: python
     buildCommand: |
       pip install --no-cache-dir -r requirements.txt
-      pip install --no-cache-dir torch==2.0.1+cpu torchvision==0.15.2+cpu -f https://download.pytorch.org/whl/cpu/torch_stable.html
+      pip install --no-cache-dir -r torch-requirements.txt
     startCommand: gunicorn app:app
     envVars:
       - key: PYTHON_VERSION
-        value: 3.8
+        value: 3.8.15
+      - key: PIP_VERSION
+        value: 22.3.1
