@@ -20,7 +20,7 @@ torchvision==0.15.2+cpu
 
 # Firebase Dependencies (adding these)
 firebase-admin==6.2.0
-Pyrebase4==4.7.1
+Pyrebase4==4.5.0
 google-auth==2.22.0
 google-cloud-storage==2.10.0
 requests==2.31.0
